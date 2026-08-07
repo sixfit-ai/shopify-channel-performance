@@ -13,8 +13,7 @@ from lying to you, and one stdlib-only Python script to run them.
 [![Email](https://img.shields.io/badge/email-hello@sixfit.ai-E9D9F8)](mailto:hello@sixfit.ai?subject=shopify-channel-performance)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-SixFit%20AI-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/company/sixfit-ai/)
 [![Instagram](https://img.shields.io/badge/Instagram-@sixfit.ai-E4405F?logo=instagram&logoColor=white)](https://www.instagram.com/sixfit.ai)
-![Slack: coming soon](https://img.shields.io/badge/Slack-coming%20soon-9E9E9E?logo=slack&logoColor=white)
-![Discord: coming soon](https://img.shields.io/badge/Discord-coming%20soon-9E9E9E?logo=discord&logoColor=white)
+[![Slack](https://img.shields.io/badge/Slack-join%20community-4A154B?logo=slack&logoColor=white)](https://join.slack.com/t/sixfit-external/shared_invite/zt-469zq1bv8-AhAsIliYSU1S_TYW4AFIlA)
 
 Questions, or the setup did not work? Email [hello@sixfit.ai](mailto:hello@sixfit.ai) or open an
 [issue](../../issues).
@@ -122,8 +121,7 @@ reference rather than trusting the recipes verbatim.
 - Website: [sixfit.ai](https://sixfit.ai)
 - LinkedIn: [SixFit AI](https://www.linkedin.com/company/sixfit-ai/)
 - Instagram: [@sixfit.ai](https://www.instagram.com/sixfit.ai)
-- Slack: coming soon
-- Discord: coming soon
+- Slack: [Join our community](https://join.slack.com/t/sixfit-external/shared_invite/zt-469zq1bv8-AhAsIliYSU1S_TYW4AFIlA)
 
 ## License
 
