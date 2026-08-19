@@ -1,191 +1,156 @@
 ---
 name: shopify-channel-performance
-description: Analyze Shopify performance by acquisition channel — sessions, conversion rate, AOV and revenue per referrer or UTM — using ShopifyQL on the Admin GraphQL API.
+description: Analyze which acquisition channels actually make a Shopify store money, using ShopifyQL through the connected Shopify store. Use this skill whenever a merchant asks where their customers or traffic come from, which channel or platform is worth the money, whether their ads, Instagram, TikTok, email, or Google traffic is paying off, why they get lots of visitors but few sales, which channel has the best or worst conversion rate, or any question comparing traffic sources against orders and revenue. Trigger it even when the merchant never says the word "channel" or "attribution", and even when they phrase it casually, for example "is Instagram even worth it", "where are my customers coming from", "my ads aren't working", or "lots of traffic no sales".
 ---
 
-# Shopify channel performance
+# Shopify Channel Performance
 
-Answers "which acquisition channel is working?" from Shopify's own analytics engine
-(`shopifyqlQuery` on the Admin GraphQL API — the same data behind Admin → Analytics → Reports).
+Answer the question a merchant is really asking: not how many visitors each source sent,
+but which source turned into orders and revenue.
 
-Shopify holds no ad spend, so **CAC and ROAS are out of scope**. This skill covers sessions,
-conversion rate, orders, revenue, AOV, margin and new-vs-returning split per channel.
+The data comes from ShopifyQL through the `run-analytics-query` tool on the connected
+Shopify store. The tool renders results as a chart widget the merchant can already see.
+Your job is not to restate the table. Your job is the interpretation that follows it.
 
-## Setup
+## Before you query
 
-One-time, by the merchant:
+**1. Confirm which store is connected.** Call `get-shop-info` first and name the store in
+your reply. The connector holds one store at a time and the merchant may have connected a
+different one than they assume. A report built on the wrong store looks completely normal
+and nobody catches it.
 
-1. Shopify Admin → Settings → Apps and sales channels → **Develop apps** → Create an app.
-2. Configuration → Admin API integration → grant **`read_reports`**.
-3. Install the app, then reveal and copy the **Admin API access token** (`shpat_…`, shown once).
-4. Export both:
+**2. Disambiguate "channel" if the question is ambiguous.** The word means two different
+things in Shopify and merchants use it for both:
 
-```sh
-export SHOPIFY_STORE=my-shop.myshopify.com
-export SHOPIFY_ADMIN_TOKEN=shpat_...
+- **Acquisition channel**, where the visitor came from before landing on the store:
+  search, social, email, direct, referral. This skill covers this one.
+- **Sales channel**, the surface where the sale happened: Online Store, POS, Shop app,
+  Instagram checkout. This is a different query and different fields.
+
+If the merchant mentions a physical store, POS, retail, or in person sales, ask which one
+they mean before running anything. Otherwise assume acquisition and say so in one short
+line, so a merchant who meant the other thing can correct you.
+
+**3. Note the reporting window.** Default to the last 30 days. Attribution is last click
+with a 30 day window, so shorter windows get noisier, not sharper.
+
+## Recipes
+
+Field names change between ShopifyQL versions. If a query returns a parse error, do not
+guess replacement fields. Use the example queries in the `run-analytics-query` tool
+description as the source of truth for valid table and column names, then retry.
+
+### Recipe 1: Channel overview
+
+The default answer to "which channel makes me money".
+
+```
+FROM sales, sessions
+SHOW sessions, conversion_rate, orders, total_sales, average_order_value
+GROUP BY referring_channel
+SINCE -30d UNTIL today
+ORDER BY total_sales DESC
 ```
 
-Then run any query through the bundled script, which prints CSV:
+### Recipe 2: Named referrer detail
 
-```sh
-python3 shopifyql.py "FROM sales SHOW total_sales SINCE -30d UNTIL today"
+Use when Recipe 1 shows a channel worth breaking open, for example social is large but
+converting badly and the merchant needs to know whether that is Instagram or TikTok.
+
+```
+FROM sales
+SHOW orders, total_sales
+GROUP BY order_referrer_source, order_referrer_name
+SINCE -30d UNTIL today
+ORDER BY total_sales DESC
 ```
 
-Requires Level 2 protected customer data access, which for admin-created custom apps is
-plan-dependent rather than review-dependent. Admin-created custom apps also get
-`read_all_orders`, so there is no 60-day history cliff.
+### Recipe 3: Funnel by channel
 
-## Query recipes
-
-Start with recipe 0, then 1. Everything else is a drill-down on what 1 shows.
-
-### 0. Taxonomy hygiene — run this before ranking anything
+Use when a channel sends real traffic but few orders, to locate where the drop happens.
 
 ```
 FROM sessions
-  SHOW sessions
-  GROUP BY utm_source
-  SINCE -90d UNTIL today
-  ORDER BY sessions DESC
-  LIMIT 50
+SHOW sessions, sessions_with_cart_additions, sessions_that_reached_checkout,
+     sessions_that_completed_checkout, conversion_rate
+GROUP BY referring_channel
+SINCE -30d UNTIL today
 ```
 
-Scan the output for the same source spelled several ways (`Facebook` / `facebook` / `fb` /
-`FB_ads`). Fragmented UTM tagging is the most common reason a channel looks weak, and it
-invalidates every ranking below until it is accounted for.
+### Recipe 4: Trend against the previous period
 
-### 1. Channel scorecard
-
-```
-FROM sales, sessions
-  SHOW sessions, conversion_rate, orders, total_sales, average_order_value
-  GROUP BY referring_channel
-  SINCE -30d UNTIL today
-  ORDER BY total_sales DESC
-```
-
-The one table: traffic, conversion, volume and basket size per channel.
-
-### 2. UTM drill-down
-
-```
-FROM sales, sessions
-  SHOW sessions, conversion_rate, orders, total_sales
-  WHERE referring_channel = 'Social'
-  GROUP BY utm_source, utm_medium, utm_campaign
-  SINCE -30d UNTIL today
-  ORDER BY total_sales DESC
-  LIMIT 25
-```
-
-Where inside a channel the revenue actually comes from. Swap the `WHERE` value for whichever
-channel recipe 1 flagged.
-
-### 3. Trend and momentum
-
-```
-FROM sales, sessions
-  SHOW sessions, orders, total_sales
-  WHERE referring_channel = 'Search'
-  TIMESERIES week
-  SINCE -90d UNTIL today
-  COMPARE TO previous_period
-```
-
-Is this channel decaying or did it have one bad week? A level read from recipe 1 cannot tell
-the difference.
-
-### 4. Campaign level, with attribution models
-
-```
-FROM campaign_sessions, campaign_sales
-  SHOW campaign_sessions,
-       campaign_conversion_rate,
-       campaign_last_click_order_count,
-       campaign_last_click_total_sales,
-       campaign_first_click_total_sales,
-       campaign_linear_total_sales
-  GROUP BY utm_campaign, utm_source
-  SINCE -30d UNTIL today
-  ORDER BY campaign_last_click_total_sales DESC
-  LIMIT 25
-```
-
-The `campaign_*` schemas are the only place Shopify exposes first-click and linear attribution.
-A campaign whose first-click sales dwarf its last-click sales is an awareness driver being
-undercounted everywhere else in this skill.
-
-### 5. New vs returning by channel
+Use when the merchant says something got worse, to check whether it actually did.
 
 ```
 FROM sales
-  SHOW orders, total_sales, average_order_value
-  GROUP BY referring_channel, new_or_returning_customer
-  SINCE -90d UNTIL today
-  ORDER BY total_sales DESC
+SHOW total_sales, orders
+TIMESERIES week
+SINCE -90d UNTIL today
+COMPARE TO previous_period
 ```
 
-Separates acquisition from re-engagement. Email and Direct usually collapse to mostly
-returning — that is retention revenue, not channel performance.
+## Interpretation rules
 
-### 6. Margin by channel
+These are the point of the skill. Apply them every time.
 
-```
-FROM sales
-  SHOW total_sales, cost_of_goods_sold, gross_profit, gross_margin
-  GROUP BY referring_channel
-  SINCE -90d UNTIL today
-  ORDER BY gross_profit DESC
-```
+**Direct is not a channel.** It is the residual bucket for every session whose origin
+could not be determined: typed URLs, but also untagged email, messaging apps, QR codes,
+and stripped referrers. A large direct share is a measurement gap, not a loyal audience.
+If direct exceeds roughly 40 percent of sessions, say so and point at UTM tagging as the
+fix. Never congratulate a merchant on strong direct traffic.
 
-Needs cost-per-item filled in on products. For landed cost (shipping, duties, adjustments) use
-the `profitability` schema, which carries `referring_channel` and `order_utm_*` but exposes
-per-order averages rather than totals.
+**Group raw referrer names into channels before presenting.** Live data returns lowercase
+source names like `bing`, `facebook`, `direct`, not tidy buckets. Roll them up
+(`google` and `bing` into search, `facebook`, `instagram`, and `tiktok` into social) and
+show the buckets. Keep the long tail out of the summary unless one entry is material.
 
-## Interpretation
+**Zero orders means undefined, not zero.** When a channel has no orders, conversion rate
+and average order value are undefined and the tool may return blank cells for them. Never
+report a blank money cell as 0.00 and never rank a channel on it. Say the channel has no
+sales in the window.
 
-Reporting the ranking is not the job. These are the things that make a ranking wrong:
+**Sessions without orders is the interesting case, not an error.** A store with traffic
+and no orders has a conversion problem or a store that is not live yet. Say which you
+think it is and why. Do not produce a channel ranking from a table where every channel
+has zero revenue.
 
-- **`referring_channel` and `utm_source` are different taxonomies.** The first is Shopify's
-  bucketing of the referrer; the second is raw merchant-controlled text. Never sum them
-  together or compare a number from one against a number from the other.
-- **Attribution is last-click on a 30-day window** by default. Recipe 4 is the only escape.
-- **Direct / Unknown is a residual, not a channel.** It absorbs dark traffic, in-app browser
-  referrers, apps that strip the referrer, and untagged links. Report it as *unattributed*
-  with its share of sessions and revenue. Never call it the top performer.
-- **Sessions and sales are stamped at different times.** A session on day 1 that converts on
-  day 5 lands in a day-1 sessions row and a day-5 sales row. Day-level joined conversion rate
-  is therefore approximate — use windows of **28 days or more** for channel CVR, and treat
-  daily CVR as directional only.
-- **Low-session channels are noise.** A channel with 40 sessions and 2 orders is not a 5% CVR,
-  it is two orders. Say so rather than ranking it.
-- **No CAC, no ROAS.** Shopify has no ad spend. If asked, say that plainly and offer revenue,
-  CVR and margin per channel instead of estimating.
+**Email is retention, not acquisition.** Email traffic is mostly people who already
+bought. Its conversion rate will beat every acquisition channel and that comparison is
+meaningless. Report it separately and say why.
 
-## Schema discovery
+**Traffic share and revenue share are different rankings.** Lead with revenue. A channel
+sending a third of sessions and a twentieth of revenue is the finding worth stating out
+loud.
 
-The recipes above were written against ShopifyQL `2026-07`. Fields churn between versions —
-confirm rather than trust:
+**Small numbers are not signal.** Below roughly 100 sessions or 10 orders in a bucket,
+say the sample is too small to act on rather than reporting a conversion rate to two
+decimals.
 
-- Syntax: <https://shopify.dev/docs/api/shopifyql.txt>
-- All schemas: <https://shopify.dev/docs/api/shopifyql/latest/schemas>
-- One schema: `…/latest/schemas/<category>/<name>.md`, e.g.
-  `…/latest/schemas/sessions_and_behavior/sessions.md`
+**Joined conversion rate is approximate under about 28 days.** Sessions are stamped at
+session time and sales at order time, so short windows misalign. Mention this only if the
+merchant asks for a window shorter than that.
 
-A `parseErrors` response means **look up the schema**, not guess again. Two rules that cause
-most of them:
+## What this cannot tell them
 
-- Multi-schema `FROM a, b` requires every `GROUP BY` field to exist **with the same name in
-  both schemas**. If a join errors, run the two schemas as separate queries and merge.
-- Clause order is fixed: `FROM … SHOW … WHERE … GROUP BY … TIMESERIES … WITH … HAVING …
-  SINCE/UNTIL/DURING … COMPARE TO … ORDER BY … LIMIT … VISUALIZE`. There is no `last_30d`
-  keyword — `DURING` takes named ranges (`last_month`, `this_quarter`); use
-  `SINCE -30d UNTIL today` for rolling windows.
+State these plainly when they are relevant, rather than letting the merchant infer a
+number that is not there.
 
-## Known limits
+- **No ad spend, so no CAC and no ROAS.** Shopify does not hold what was paid to Meta or
+  Google. This skill can say a channel produced little revenue. It cannot say a channel
+  lost money. That needs ad platform data alongside this.
+- **Last click only.** A customer who found the store through Instagram and returned via
+  search is credited to search. First touch and multi touch attribution are not available
+  here.
+- **No per channel lifetime value.** These numbers are one window, not cohort value over
+  time.
 
-First-touch attribution and per-channel LTV cohorts are **not** answerable from ShopifyQL
-outside the `campaign_*` schemas. The only general route is `Order.customerJourneySummary` on
-the Admin GraphQL API (`firstVisit`/`lastVisit` → `source`, `utmParameters`, `referrerUrl`,
-plus `daysToConversion` and `customerOrderIndex`), which requires walking orders one by one.
-That is out of scope here — say so rather than approximating it with last-click numbers.
+## Response shape
+
+Keep it short. The merchant is looking at the chart already.
+
+1. One line naming the store and the window.
+2. The headline finding, revenue first.
+3. One or two caveats from the interpretation rules that actually apply. Not all of them.
+4. One concrete next step, tied to a recipe above or to an action outside Shopify.
+
+Do not repeat the table in prose. Do not open with methodology.
