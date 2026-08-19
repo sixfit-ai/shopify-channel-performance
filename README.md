@@ -7,18 +7,106 @@ referring channel, with the interpretation rules that keep those numbers from ly
 No API token, no app creation, no local setup. It runs on the Shopify connector in
 claude.ai.
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-B0257A)](LICENSE)
+[![ShopifyQL 2026-07](https://img.shields.io/badge/ShopifyQL-2026--07-95BF47)](https://shopify.dev/docs/api/shopifyql)
+
+[![Website](https://img.shields.io/badge/website-sixfit.ai-B0257A)](https://sixfit.ai)
+[![Email](https://img.shields.io/badge/email-hello@sixfit.ai-E9D9F8)](mailto:hello@sixfit.ai?subject=shopify-channel-performance)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-SixFit%20AI-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/company/sixfit-ai/)
+[![Instagram](https://img.shields.io/badge/Instagram-@sixfit.ai-E4405F?logo=instagram&logoColor=white)](https://www.instagram.com/sixfit.ai)
+[![Slack](https://img.shields.io/badge/Slack-join%20community-4A154B?logo=slack&logoColor=white)](https://join.slack.com/t/sixfit-external/shared_invite/zt-469zq1bv8-AhAsIliYSU1S_TYW4AFIlA)
+
+Questions, or the setup did not work? Email [hello@sixfit.ai](mailto:hello@sixfit.ai) or open an
+[issue](../../issues).
+
 ## Setup
 
-**1. Enable code execution.** Settings, then Capabilities, then turn on Code execution and
-file creation. Skills do not load without it.
+This takes about five minutes and requires no technical background. You do not need to
+write code, install anything, or create a Shopify app.
 
-**2. Upload the skill.** Customize, then Skills, then upload `shopify-channel-performance.skill`.
+### What you are actually setting up
 
-**3. Connect the store.** Settings, then Connectors, then Shopify. Authorize the store you
-want to analyze.
+Three plain-language definitions, so the steps below make sense:
 
-That is the whole setup. Custom skills on claude.ai are per user, so each merchant uploads
-their own copy.
+- **Claude** is the AI assistant at [claude.ai](https://claude.ai). You chat with it in a
+  browser, the same way you would use ChatGPT.
+- **A skill** is a file you upload to Claude that teaches it how to do one specific job
+  well. This repository *is* that file. Once uploaded, Claude uses it automatically
+  whenever you ask a question about your traffic sources. You never have to "run" it.
+- **A connector** is a secure, read-only link between Claude and another service, in this
+  case your Shopify store. It lets Claude look up your real numbers instead of guessing.
+  You approve it through Shopify's own login screen, so Claude never sees your password.
+
+### Before you start
+
+- A [claude.ai](https://claude.ai) account, logged in **in a web browser on a computer**.
+  The Skills and Connectors settings are not available in the mobile app.
+- A Shopify store you are the owner or staff member of, with permission to view analytics.
+- Custom skills and connectors are features of Claude's paid plans. If you do not see the
+  menus described below, check your plan under **Settings → Account**.
+
+### Step 1 — Download the skill file
+
+At the top of this page, click **`shopify-channel-performance.skill`**, then click the
+**Download** button. Save it somewhere you can find again, such as your Downloads folder.
+
+Do not unzip, rename, or open the file. Claude expects it exactly as downloaded.
+
+### Step 2 — Turn on code execution
+
+Claude cannot load any skill until this setting is on.
+
+1. Go to [claude.ai](https://claude.ai) and log in.
+2. Click your **name or profile picture** in the bottom-left corner, then **Settings**.
+3. Open the **Capabilities** section.
+4. Turn on **Code execution and file creation**.
+
+If this is off, the skill will appear to upload correctly but will never actually run.
+
+### Step 3 — Upload the skill
+
+1. Still in Claude, open **Settings → Capabilities → Skills**. (Depending on your version
+   of the interface, this may appear under **Customize → Skills**.)
+2. Click **Upload skill**.
+3. Select the `shopify-channel-performance.skill` file you downloaded in Step 1.
+4. Confirm that **shopify-channel-performance** now appears in your list of skills and is
+   switched on.
+
+Skills are per user. Uploading it to your account does not add it for your colleagues, and
+each person who wants it uploads their own copy.
+
+### Step 4 — Connect your Shopify store
+
+1. In Claude, open **Settings → Connectors**.
+2. Find **Shopify** in the list and click **Connect**.
+3. A Shopify window opens. Log in if asked, then choose the store you want to analyze.
+4. Review the permissions Shopify shows you and click **Install** or **Authorize**.
+5. You are returned to Claude, and Shopify now shows as connected.
+
+The connector holds **one store at a time**. If you manage several stores, you analyze one,
+then reconnect to switch to another.
+
+### Step 5 — Check that it worked
+
+Start a new chat and ask:
+
+> Which channel actually made me money last month?
+
+A correct setup looks like this: Claude first names the store it is connected to, then
+shows a chart or table of your real numbers, then explains what they mean.
+
+If instead it answers in general terms without naming your store or showing figures, one of
+the steps above did not take effect. Work back through this checklist:
+
+| Symptom | Most likely cause |
+| --- | --- |
+| Claude gives generic advice, no numbers | The store is not connected (Step 4) |
+| Claude says it cannot find the skill | Code execution is off (Step 2) |
+| Numbers belong to a different shop | A different store is authorized (Step 4) |
+| The Skills or Connectors menu is missing | Plan does not include them, or you are on mobile |
+
+Still stuck? Email [hello@sixfit.ai](mailto:hello@sixfit.ai) or open an
+[issue](../../issues) and describe which step failed.
 
 ## Usage
 
