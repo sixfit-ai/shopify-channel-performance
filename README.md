@@ -45,14 +45,14 @@ Three plain-language definitions, so the steps below make sense:
 - Custom skills and connectors are features of Claude's paid plans. If you do not see the
   menus described below, check your plan under **Settings → Account**.
 
-### Step 1 — Download the skill file
+### Step 1: Download the skill file
 
 At the top of this page, click **`shopify-channel-performance.skill`**, then click the
 **Download** button. Save it somewhere you can find again, such as your Downloads folder.
 
 Do not unzip, rename, or open the file. Claude expects it exactly as downloaded.
 
-### Step 2 — Turn on code execution
+### Step 2: Turn on code execution
 
 Claude cannot load any skill until this setting is on.
 
@@ -63,7 +63,7 @@ Claude cannot load any skill until this setting is on.
 
 If this is off, the skill will appear to upload correctly but will never actually run.
 
-### Step 3 — Upload the skill
+### Step 3: Upload the skill
 
 1. Still in Claude, open **Settings → Capabilities → Skills**. (Depending on your version
    of the interface, this may appear under **Customize → Skills**.)
@@ -75,7 +75,7 @@ If this is off, the skill will appear to upload correctly but will never actuall
 Skills are per user. Uploading it to your account does not add it for your colleagues, and
 each person who wants it uploads their own copy.
 
-### Step 4 — Connect your Shopify store
+### Step 4: Connect your Shopify store
 
 1. In Claude, open **Settings → Connectors**.
 2. Find **Shopify** in the list and click **Connect**.
@@ -86,7 +86,7 @@ each person who wants it uploads their own copy.
 The connector holds **one store at a time**. If you manage several stores, you analyze one,
 then reconnect to switch to another.
 
-### Step 5 — Check that it worked
+### Step 5: Check that it worked
 
 Start a new chat and ask:
 
